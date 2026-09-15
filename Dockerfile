@@ -8,12 +8,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ENV CI=true \
-    NODE_ENV=production \
     NODE_OPTIONS=--max_old_space_size=4096
 
 COPY bigbluebutton-html5/ ./
 RUN npm ci --no-progress \
-    && DISABLE_ESLINT_PLUGIN=true npm run build \
+    && NODE_ENV=production DISABLE_ESLINT_PLUGIN=true npm run build \
     && find dist -name '*.js' -exec gzip -k -f -9 '{}' \; \
     && find dist -name '*.css' -exec gzip -k -f -9 '{}' \; \
     && find dist -name '*.wasm' -exec gzip -k -f -9 '{}' \;
@@ -22,13 +21,12 @@ FROM node:22-bookworm-slim AS dashboard-builder
 
 WORKDIR /src
 ENV CI=true \
-    NODE_ENV=production \
     NODE_OPTIONS=--max_old_space_size=4096 \
     DISABLE_ESLINT_PLUGIN=true
 
 COPY bbb-learning-dashboard/ ./
 RUN npm ci --no-progress \
-    && npm run build
+    && NODE_ENV=production npm run build
 
 FROM nginx:1.27-alpine
 
