@@ -1,0 +1,25 @@
+FROM node:22-bookworm-slim AS builder
+
+WORKDIR /src
+COPY bbb-export-annotations/package.json bbb-export-annotations/package-lock.json ./
+RUN npm ci --no-progress
+COPY bbb-export-annotations/ ./
+
+FROM node:22-bookworm-slim
+
+RUN groupadd -g 998 bigbluebutton \
+    && useradd -m -u 998 -g bigbluebutton bigbluebutton \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends cairosvg ghostscript imagemagick poppler-utils fonts-liberation \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /tmp/pres-ann-dropbox \
+    && chown -R bigbluebutton:bigbluebutton /tmp/pres-ann-dropbox
+
+WORKDIR /bbb-export-annotations
+COPY --from=builder /src /bbb-export-annotations
+COPY docker/export-annotations/settings.json /bbb-export-annotations/config/settings.json
+RUN chown -R bigbluebutton:bigbluebutton /bbb-export-annotations
+
+USER bigbluebutton
+ENV NODE_ENV=production
+CMD ["npm", "start"]

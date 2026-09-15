@@ -1,0 +1,31 @@
+server:
+  listen_host: 0.0.0.0
+  listen_port: 8378
+  max_connections: 500
+  max_connections_per_session_token: 3
+  max_connections_per_second: 100
+  max_connection_queries_per_minute: 200
+  max_connection_mutations_per_minute: 2000
+  max_connection_concurrent_subscriptions: 150
+  max_query_length: 5000
+  max_query_depth: 6
+  max_mutation_length: 10000
+  json_patch_disabled: false
+  subscriptions_allowed_list:
+  subscriptions_denied_list:
+  websocket_idle_timeout_seconds: 60
+redis:
+  host: redis
+  port: 6379
+  password: ""
+hasura:
+  url: ws://graphql-server:8085/v1/graphql
+graphql-actions:
+  url: http://graphql-actions:8093
+auth_hook:
+  url: http://bbb-web:8090/bigbluebutton/connection/checkGraphqlAuthorization
+session_vars_hook:
+  url: http://apps-akka:8901/userInfo
+prometheus_advanced_metrics_enabled: false
+log_level: INFO
+dump_queries_dir:

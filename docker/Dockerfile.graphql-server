@@ -1,0 +1,29 @@
+FROM debian:bookworm-slim AS tools
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | INSTALL_PATH=/usr/local/bin VERSION=v2.44.0 bash \
+    && curl -fsSL -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
+    && chmod +x /usr/local/bin/yq \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM hasura/graphql-engine:v2.44.0
+
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends net-tools gosu postgresql-client ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=tools /usr/local/bin/hasura /usr/local/bin/hasura
+COPY --from=tools /usr/local/bin/yq /usr/local/bin/yq
+COPY bbb-graphql-server/bbb_schema.sql /app/bbb_schema.sql
+COPY bbb-graphql-server/metadata /app/metadata
+COPY bbb-graphql-server/config.yaml /app/config.yaml
+COPY docker/graphql-server/entrypoint.sh /entrypoint.sh
+COPY docker/graphql-server/start.sh /app/start.sh
+RUN chmod +x /entrypoint.sh /app/start.sh
+
+WORKDIR /app
+EXPOSE 8085
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/app/start.sh"]

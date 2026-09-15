@@ -1,0 +1,19 @@
+FROM golang:1.24-bookworm AS builder
+
+WORKDIR /src
+COPY bbb-graphql-middleware/go.mod bbb-graphql-middleware/go.sum ./
+RUN go mod download
+COPY bbb-graphql-middleware/ ./
+RUN CGO_ENABLED=0 go build -o /out/bbb-graphql-middleware ./cmd/bbb-graphql-middleware
+
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates \
+    && mkdir -p /usr/share/bbb-graphql-middleware /etc/bigbluebutton
+
+COPY --from=builder /out/bbb-graphql-middleware /app/bbb-graphql-middleware
+COPY bbb-graphql-middleware/config/config.yml /usr/share/bbb-graphql-middleware/config.yml
+COPY docker/graphql-middleware/config.yml /etc/bigbluebutton/bbb-graphql-middleware.yml
+
+EXPOSE 8378
+CMD ["/app/bbb-graphql-middleware"]
